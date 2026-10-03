@@ -29,7 +29,7 @@ jobs:
       IDLE_MINUTES: ${{ inputs.idle_minutes }}
       FB_USER: conan
       FB_PASS: ${{ secrets.FB_PASS }}
-      CONTENT_PAT: ${{ secrets.CONTENT_PAT }}
+      CONTENT_DEPLOY_KEY: ${{ secrets.CONTENT_DEPLOY_KEY }}
       CF_PAGES_TOKEN: ${{ secrets.CF_PAGES_TOKEN }}
       CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
     steps:

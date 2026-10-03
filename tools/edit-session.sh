@@ -18,7 +18,11 @@ PROJ=$(echo "$DOMAIN" | tr '.' '-')     # Pages project name convention
 SITEDIR="/tmp/content/sites/$DOMAIN"
 
 echo "::group::Clone private content repo"
-git clone --depth 1 "https://x-access-token:${CONTENT_PAT}@github.com/ryx168/conan-static-sites.git" /tmp/content 2>&1 | tail -1
+mkdir -p ~/.ssh
+printf '%s\n' "$CONTENT_DEPLOY_KEY" > ~/.ssh/content_key
+chmod 600 ~/.ssh/content_key
+export GIT_SSH_COMMAND="ssh -i $HOME/.ssh/content_key -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+git clone --depth 1 git@github.com:ryx168/conan-static-sites.git /tmp/content 2>&1 | tail -1
 if [ ! -d "$SITEDIR" ]; then echo "FATAL: sites/$DOMAIN not found in content repo"; exit 1; fi
 echo "  editing: $SITEDIR"
 echo "::endgroup::"
