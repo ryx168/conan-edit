@@ -28,10 +28,10 @@ echo "  editing: $SITEDIR"
 echo "::endgroup::"
 
 echo "::group::Install filebrowser + cloudflared"
-curl -fsSL https://raw.githubusercontent.com/filebrowser/get/master/get.sh | bash
+curl -fsSL --retry 5 --retry-all-errors https://raw.githubusercontent.com/filebrowser/get/master/get.sh | bash
 command -v filebrowser >/dev/null || { for p in /usr/local/bin/filebrowser ./filebrowser; do [ -x "$p" ] && sudo ln -sf "$(realpath "$p")" /usr/local/bin/filebrowser && break; done; }
 command -v filebrowser >/dev/null || { echo "FATAL: filebrowser missing"; exit 1; }
-curl -fsSL -o /tmp/cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
+curl -fsSL --retry 6 --retry-all-errors --retry-delay 3 -o /tmp/cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
 chmod +x /tmp/cloudflared
 echo "  installing wrangler..."
 sudo npm i -g wrangler@4.120.1 >/tmp/wrangler-install.log 2>&1 && wrangler --version 2>/dev/null || { echo "wrangler install failed:"; tail -5 /tmp/wrangler-install.log; }
@@ -73,7 +73,7 @@ echo "::group::Tunnels"
 /tmp/cloudflared tunnel --url http://127.0.0.1:8080 --no-autoupdate >/tmp/cf.log 2>&1 &
 WEB_URL=""
 for i in $(seq 1 20); do sleep 2; WEB_URL=$(grep -oE 'https://[a-z0-9-]+\.trycloudflare\.com' /tmp/cf.log | head -1 || true); [ -n "$WEB_URL" ] && break; done
-curl -fsSL -o /tmp/bore.tgz https://github.com/ekzhang/bore/releases/download/v0.5.1/bore-v0.5.1-x86_64-unknown-linux-musl.tar.gz 2>/dev/null && tar xzf /tmp/bore.tgz -C /tmp 2>/dev/null
+curl -fsSL --retry 6 --retry-all-errors --retry-delay 3 -o /tmp/bore.tgz https://github.com/ekzhang/bore/releases/download/v0.5.1/bore-v0.5.1-x86_64-unknown-linux-musl.tar.gz 2>/dev/null && tar xzf /tmp/bore.tgz -C /tmp 2>/dev/null
 SFTP_PORT=""
 if [ -x /tmp/bore ]; then /tmp/bore local 2222 --to bore.pub >/tmp/bore.log 2>&1 & for i in $(seq 1 15); do sleep 2; SFTP_PORT=$(grep -oE 'bore\.pub:[0-9]+' /tmp/bore.log | head -1 | cut -d: -f2 || true); [ -n "$SFTP_PORT" ] && break; done; fi
 [ -n "$WEB_URL" ] || { echo "FATAL: no web tunnel"; cat /tmp/cf.log; exit 1; }
