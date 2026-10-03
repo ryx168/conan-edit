@@ -96,8 +96,15 @@ publish
 cd /tmp/content
 git config user.email "superesolutions@gmail.com"; git config user.name "conan editor"
 deploy() {
+  # Deploy from a clean, runner-owned copy: files edited over SFTP are owned by
+  # user 'conan' (and may not be fully readable by the runner), which made
+  # wrangler fail with a filesystem permission error. cp as root then chown.
+  sudo rm -rf /tmp/pub; mkdir -p /tmp/pub
+  sudo cp -a "/tmp/content/sites/$DOMAIN/." /tmp/pub/ 2>/dev/null
+  sudo chown -R "$(id -un):$(id -gn)" /tmp/pub 2>/dev/null
+  rm -rf /tmp/pub/.git
   if CLOUDFLARE_API_TOKEN="$CF_PAGES_TOKEN" CLOUDFLARE_ACCOUNT_ID="$CF_ACCOUNT_ID" \
-    wrangler pages deploy "sites/$DOMAIN" --project-name "$PROJ" --branch main --commit-dirty=true >/tmp/deploy.log 2>&1; then
+    wrangler pages deploy /tmp/pub --project-name "$PROJ" --branch main --commit-dirty=true >/tmp/deploy.log 2>&1; then
     echo "  [$(date -u +%H:%M:%S)] deployed to Pages ($PROJ)"
   else
     echo "  deploy FAILED:"; tail -15 /tmp/deploy.log
