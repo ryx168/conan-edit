@@ -28,9 +28,12 @@ echo "  editing: $SITEDIR"
 echo "::endgroup::"
 
 echo "::group::Install filebrowser + cloudflared"
-curl -fsSL --retry 5 --retry-all-errors https://raw.githubusercontent.com/filebrowser/get/master/get.sh | bash
-command -v filebrowser >/dev/null || { for p in /usr/local/bin/filebrowser ./filebrowser; do [ -x "$p" ] && sudo ln -sf "$(realpath "$p")" /usr/local/bin/filebrowser && break; done; }
+# Pin classic filebrowser v2.27.0 (get.sh now installs a fork whose noauth is broken).
+curl -fsSL --retry 6 --retry-all-errors --retry-delay 3 -o /tmp/fb.tar.gz https://github.com/filebrowser/filebrowser/releases/download/v2.27.0/linux-amd64-filebrowser.tar.gz
+tar xzf /tmp/fb.tar.gz -C /tmp filebrowser 2>/dev/null
+sudo mv /tmp/filebrowser /usr/local/bin/filebrowser && sudo chmod +x /usr/local/bin/filebrowser
 command -v filebrowser >/dev/null || { echo "FATAL: filebrowser missing"; exit 1; }
+filebrowser version 2>/dev/null | head -1
 curl -fsSL --retry 6 --retry-all-errors --retry-delay 3 -o /tmp/cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
 chmod +x /tmp/cloudflared
 echo "  installing wrangler..."
