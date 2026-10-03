@@ -1,0 +1,38 @@
+name: Conan site edit session
+
+# One generic on-demand editor for any Conan static site. Edits sites/<domain>/
+# in the private repo ryx168/conan-static-sites and auto-deploys to that site's
+# Cloudflare Pages project. Launched (per domain) by the control hub.
+
+on:
+  workflow_dispatch:
+    inputs:
+      domain:
+        description: "Site domain, e.g. cpholiday.ca"
+        required: true
+      idle_minutes:
+        description: "Idle minutes before auto-stop"
+        default: "15"
+
+concurrency:
+  group: edit-${{ inputs.domain }}
+  cancel-in-progress: false
+
+jobs:
+  edit:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 350
+    permissions:
+      contents: write
+    env:
+      DOMAIN: ${{ inputs.domain }}
+      IDLE_MINUTES: ${{ inputs.idle_minutes }}
+      FB_USER: conan
+      FB_PASS: ${{ secrets.FB_PASS }}
+      CONTENT_PAT: ${{ secrets.CONTENT_PAT }}
+      CF_PAGES_TOKEN: ${{ secrets.CF_PAGES_TOKEN }}
+      CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Edit session
+        run: bash tools/edit-session.sh
