@@ -40,7 +40,10 @@ echo "::endgroup::"
 echo "::group::Start filebrowser + SFTP"
 FB_DB=/tmp/filebrowser.db
 filebrowser config init -d "$FB_DB" --root "$SITEDIR" >/tmp/fb-init.log 2>&1
-filebrowser users add -d "$FB_DB" "${FB_USER:-conan}" "$FB_PASS" --perm.admin >/tmp/fb-user.log 2>&1
+# no-login web UI: the session is already gated by the hub + the random tunnel
+# URL, so filebrowser auto-logs in (no separate username/password prompt).
+filebrowser config set -d "$FB_DB" --auth.method=noauth >>/tmp/fb-init.log 2>&1
+filebrowser users add -d "$FB_DB" admin "$FB_PASS" --perm.admin >/tmp/fb-user.log 2>&1 || true
 filebrowser -d "$FB_DB" -a 127.0.0.1 -p 8080 --root "$SITEDIR" >/tmp/filebrowser.log 2>&1 &
 FB_PID=$!
 # SFTP (conan@bore.pub) scoped to the site folder
