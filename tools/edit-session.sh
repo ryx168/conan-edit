@@ -33,6 +33,8 @@ command -v filebrowser >/dev/null || { for p in /usr/local/bin/filebrowser ./fil
 command -v filebrowser >/dev/null || { echo "FATAL: filebrowser missing"; exit 1; }
 curl -fsSL -o /tmp/cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
 chmod +x /tmp/cloudflared
+echo "  installing wrangler..."
+sudo npm i -g wrangler@4.120.1 >/tmp/wrangler-install.log 2>&1 && wrangler --version 2>/dev/null || { echo "wrangler install failed:"; tail -5 /tmp/wrangler-install.log; }
 echo "::endgroup::"
 
 echo "::group::Start filebrowser + SFTP"
@@ -94,9 +96,12 @@ publish
 cd /tmp/content
 git config user.email "superesolutions@gmail.com"; git config user.name "conan editor"
 deploy() {
-  CLOUDFLARE_API_TOKEN="$CF_PAGES_TOKEN" CLOUDFLARE_ACCOUNT_ID="$CF_ACCOUNT_ID" \
-    npx -y wrangler@4 pages deploy "sites/$DOMAIN" --project-name "$PROJ" --branch main --commit-dirty=true >/tmp/deploy.log 2>&1 \
-    && echo "  [$(date -u +%H:%M:%S)] deployed to Pages ($PROJ)" || { echo "  deploy FAILED:"; tail -3 /tmp/deploy.log; }
+  if CLOUDFLARE_API_TOKEN="$CF_PAGES_TOKEN" CLOUDFLARE_ACCOUNT_ID="$CF_ACCOUNT_ID" \
+    wrangler pages deploy "sites/$DOMAIN" --project-name "$PROJ" --branch main --commit-dirty=true >/tmp/deploy.log 2>&1; then
+    echo "  [$(date -u +%H:%M:%S)] deployed to Pages ($PROJ)"
+  else
+    echo "  deploy FAILED:"; tail -15 /tmp/deploy.log
+  fi
 }
 commit_and_deploy() {
   if [ -n "$(git status --porcelain "sites/$DOMAIN")" ]; then
