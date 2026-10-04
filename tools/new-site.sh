@@ -49,10 +49,20 @@ echo "::endgroup::"
 echo "::group::Cloudflare Pages project + deploy"
 sudo npm i -g wrangler@4.120.1 >/tmp/wi.log 2>&1 && wrangler --version || { echo "wrangler install failed"; tail -5 /tmp/wi.log; }
 export CLOUDFLARE_API_TOKEN="$CF_PAGES_TOKEN" CLOUDFLARE_ACCOUNT_ID="$CF_ACCOUNT_ID"
-# Create the project (idempotent: ignore "already exists").
-wrangler pages project create "$PROJ" --production-branch main >/tmp/create.log 2>&1 \
-  && echo "  project created: $PROJ" \
-  || { grep -qiE "already|exists|conflict" /tmp/create.log && echo "  project already exists: $PROJ" || { echo "  project create FAILED:"; tail -8 /tmp/create.log; }; }
+# Create the project. Idempotent (ignore "already exists") and retried: the
+# Pages API intermittently returns a transient "unknown error [code: 8000000]".
+created=0
+for attempt in 1 2 3 4; do
+  if wrangler pages project create "$PROJ" --production-branch main >/tmp/create.log 2>&1; then
+    echo "  project created: $PROJ"; created=1; break
+  fi
+  if grep -qiE "already|exists|conflict|duplicate" /tmp/create.log; then
+    echo "  project already exists: $PROJ"; created=1; break
+  fi
+  echo "  create attempt $attempt failed (transient?); retrying in 8s"; tail -3 /tmp/create.log
+  sleep 8
+done
+[ "$created" = 1 ] || { echo "  project create FAILED after retries:"; tail -8 /tmp/create.log; exit 1; }
 # Deploy from a clean, runner-owned copy (SFTP/clone ownership quirks aside).
 sudo rm -rf /tmp/pub; mkdir -p /tmp/pub
 sudo cp -a "$SITEDIR/." /tmp/pub/ 2>/dev/null
