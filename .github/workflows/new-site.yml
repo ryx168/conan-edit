@@ -1,0 +1,38 @@
+name: New site
+
+# Provision a brand-new static site: scaffold its folder in the private content
+# repo, create + deploy its Cloudflare Pages project, and register it in
+# sites.json so the hub lists it with a ready-to-use 檔案 editor.
+
+on:
+  workflow_dispatch:
+    inputs:
+      domain:
+        description: "Site domain / identifier, e.g. newcustomer.com"
+        required: true
+      title:
+        description: "Display name (optional; defaults to the domain)"
+        required: false
+        default: ""
+
+concurrency:
+  group: new-site
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  create:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CONTENT_DEPLOY_KEY: ${{ secrets.CONTENT_DEPLOY_KEY }}
+      CF_PAGES_TOKEN: ${{ secrets.CF_PAGES_TOKEN }}
+      CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+      DOMAIN: ${{ inputs.domain }}
+      TITLE: ${{ inputs.title }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Provision
+        run: bash tools/new-site.sh

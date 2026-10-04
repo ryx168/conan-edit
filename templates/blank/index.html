@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<!-- 這是一個起始範本。用控制中心的「檔案」編輯器修改文字與圖片即可。 -->
+<title>{{TITLE}}</title>
+<style>
+  :root{ --ink:#1f2933; --muted:#5f6b7a; --accent:#1f7a43; --line:#e4e9e7; --bg:#ffffff; }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;
+    color:var(--ink);background:var(--bg);line-height:1.7}
+  header{border-bottom:1px solid var(--line)}
+  .wrap{max-width:860px;margin:0 auto;padding:0 20px}
+  nav{display:flex;align-items:center;justify-content:space-between;height:66px}
+  .brand{font-weight:700;font-size:19px}
+  nav a{color:var(--muted);text-decoration:none;margin-left:22px;font-size:15px}
+  nav a:hover{color:var(--ink)}
+  .hero{padding:72px 0 56px;text-align:center}
+  .hero h1{font-size:clamp(28px,6vw,44px);margin:0 0 14px;text-wrap:balance}
+  .hero p{font-size:18px;color:var(--muted);max-width:52ch;margin:0 auto 26px}
+  .btn{display:inline-block;background:var(--accent);color:#fff;text-decoration:none;
+    padding:12px 24px;border-radius:8px;font-weight:600}
+  section{padding:40px 0;border-top:1px solid var(--line)}
+  h2{font-size:22px;margin:0 0 12px}
+  .cards{display:grid;grid-template-columns:1fr;gap:16px}
+  @media(min-width:620px){.cards{grid-template-columns:1fr 1fr 1fr}}
+  .card{border:1px solid var(--line);border-radius:12px;padding:20px}
+  .card h3{margin:0 0 6px;font-size:16px}
+  .card p{margin:0;color:var(--muted);font-size:14px}
+  footer{border-top:1px solid var(--line);color:var(--muted);font-size:14px;padding:28px 0;text-align:center}
+</style>
+</head>
+<body>
+  <header><div class="wrap"><nav>
+    <span class="brand">{{TITLE}}</span>
+    <span>
+      <a href="#about">關於我們</a>
+      <a href="#services">服務項目</a>
+      <a href="#contact">聯絡我們</a>
+    </span>
+  </nav></div></header>
+
+  <main class="wrap">
+    <div class="hero">
+      <h1>{{TITLE}}</h1>
+      <p>歡迎光臨。這是一個全新的網站範本，請用控制中心的「檔案」編輯器修改這裡的文字與圖片。</p>
+      <a class="btn" href="#contact">與我們聯絡</a>
+    </div>
+
+    <section id="about">
+      <h2>關於我們</h2>
+      <p>在這裡介紹您的公司或品牌——您是誰、提供什麼、為什麼客戶該選擇您。</p>
+    </section>
+
+    <section id="services">
+      <h2>服務項目</h2>
+      <div class="cards">
+        <div class="card"><h3>服務一</h3><p>簡短描述第一項服務。</p></div>
+        <div class="card"><h3>服務二</h3><p>簡短描述第二項服務。</p></div>
+        <div class="card"><h3>服務三</h3><p>簡短描述第三項服務。</p></div>
+      </div>
+    </section>
+
+    <section id="contact">
+      <h2>聯絡我們</h2>
+      <p>電話：000-000-0000　·　電子郵件：info@{{DOMAIN}}</p>
+      <p>地址：請在此填入您的地址。</p>
+    </section>
+  </main>
+
+  <footer><div class="wrap">© <span id="y"></span> {{TITLE}}　·　{{DOMAIN}}</div></footer>
+  <script>document.getElementById('y').textContent=new Date().getFullYear();</script>
+</body>
+</html>
