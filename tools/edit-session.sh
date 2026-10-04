@@ -43,10 +43,28 @@ echo "::endgroup::"
 echo "::group::Start filebrowser + SFTP"
 FB_DB=/tmp/filebrowser.db
 filebrowser config init -d "$FB_DB" --root "$SITEDIR" >/tmp/fb-init.log 2>&1
-# no-login web UI: the session is already gated by the hub + the random tunnel
-# URL, so filebrowser auto-logs in (no separate username/password prompt).
-filebrowser config set -d "$FB_DB" --auth.method=noauth >>/tmp/fb-init.log 2>&1
-filebrowser users add -d "$FB_DB" admin "$FB_PASS" --perm.admin >/tmp/fb-user.log 2>&1 || true
+# Per-domain login: if the owner set a username+password for this domain in the
+# hub, the web file manager requires it; otherwise it stays no-login (the random
+# tunnel URL still gates it). Creds come from the hub over the FMAUTH_KEY-gated
+# endpoint, so each customer can edit only their own domain.
+FM_DOM="${DOMAIN#www.}"
+FM_USER=""; FM_PW=""
+if [ -n "${FMAUTH_KEY:-}" ] && [ -n "$FM_DOM" ]; then
+  creds=$(curl -s -m 10 -H "authorization: Bearer $FMAUTH_KEY" "https://conanhub.supere.ca/fmauth/$FM_DOM" 2>/dev/null || echo '{}')
+  FM_USER=$(printf '%s' "$creds" | python3 -c "import sys,json;print(json.load(sys.stdin).get('u',''))" 2>/dev/null || true)
+  FM_PW=$(printf '%s' "$creds" | python3 -c "import sys,json;print(json.load(sys.stdin).get('p',''))" 2>/dev/null || true)
+fi
+if [ -n "$FM_USER" ] && [ -n "$FM_PW" ]; then
+  filebrowser config set -d "$FB_DB" --auth.method=json >>/tmp/fb-init.log 2>&1
+  filebrowser users add "$FM_USER" "$FM_PW" --perm.admin -d "$FB_DB" >/tmp/fb-user.log 2>&1 \
+    || filebrowser users update "$FM_USER" --password "$FM_PW" -d "$FB_DB" >>/tmp/fb-user.log 2>&1
+  { [ "$FM_USER" != "admin" ] && filebrowser users rm admin -d "$FB_DB" >/dev/null 2>&1; } || true
+  echo "  web login: password required (user $FM_USER)"
+else
+  filebrowser config set -d "$FB_DB" --auth.method=noauth >>/tmp/fb-init.log 2>&1
+  filebrowser users add -d "$FB_DB" admin "${FB_PASS:-changeme}" --perm.admin >/tmp/fb-user.log 2>&1 || true
+  echo "  web login: none (no per-domain credentials set)"
+fi
 filebrowser -d "$FB_DB" -a 127.0.0.1 -p 8080 --root "$SITEDIR" >/tmp/filebrowser.log 2>&1 &
 FB_PID=$!
 # SFTP (conan@bore.pub) scoped to the site folder
