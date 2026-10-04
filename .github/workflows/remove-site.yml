@@ -1,0 +1,33 @@
+name: Remove site
+
+# Reverse of new-site: delete a hub-created static site's Pages project, its
+# folder in the private content repo, and its sites.json entry. Refuses any
+# domain that is not registered in sites.json (so the 37 built-ins are safe).
+
+on:
+  workflow_dispatch:
+    inputs:
+      domain:
+        description: "Domain of the hub-created site to remove"
+        required: true
+
+concurrency:
+  group: new-site
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  remove:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CONTENT_DEPLOY_KEY: ${{ secrets.CONTENT_DEPLOY_KEY }}
+      CF_PAGES_TOKEN: ${{ secrets.CF_PAGES_TOKEN }}
+      CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+      DOMAIN: ${{ inputs.domain }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Remove
+        run: bash tools/remove-site.sh
